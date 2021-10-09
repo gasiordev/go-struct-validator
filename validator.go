@@ -127,7 +127,7 @@ func validateValue(value reflect.Value, validation *FieldValidation) (bool, int)
 			}
 		}
 	}
-	
+
 	if strings.HasPrefix(value.Type().Name(), "int") {
 		if (validation.valMin != 0 || (!canBeZero && validation.valMin == 0)) && validation.valMin > value.Int() {
 			return false, FailValMin

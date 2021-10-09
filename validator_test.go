@@ -35,11 +35,11 @@ func TestWithDefaultValues(t *testing.T) {
 	expectedBool := false
 	expectedFailedFields := map[string]int{
 		"FirstName": FailEmpty,
-		"LastName": FailEmpty,
-		"Age": FailZero,
-		"PostCode": FailEmpty,
-		"Email": FailEmpty,
-		"Country": FailRegexp,
+		"LastName":  FailEmpty,
+		"Age":       FailZero,
+		"PostCode":  FailEmpty,
+		"Email":     FailEmpty,
+		"Country":   FailRegexp,
 		"BelowZero": FailValMax,
 	}
 	compare(&s, expectedBool, expectedFailedFields, nil, nil, "", t)
@@ -47,43 +47,43 @@ func TestWithDefaultValues(t *testing.T) {
 
 func TestWithInvalidValues(t *testing.T) {
 	s := Test1{
-		FirstName: "123456789012345678901234567890",
-		LastName: "b",
-		Age: 15,
-		Price: 0,
-		PostCode: "AA123",
-		Email: "invalidEmail",
-		BelowZero: 8,
+		FirstName:     "123456789012345678901234567890",
+		LastName:      "b",
+		Age:           15,
+		Price:         0,
+		PostCode:      "AA123",
+		Email:         "invalidEmail",
+		BelowZero:     8,
 		DiscountPrice: 9999,
-		Country: "Tokelau",
-		County: "",
+		Country:       "Tokelau",
+		County:        "",
 	}
 	expectedBool := false
 	expectedFailedFields := map[string]int{
-		"FirstName": FailLenMax,
-		"LastName": FailLenMin,
-		"Age": FailValMin,
-		"PostCode": FailRegexp,
-		"Email": FailEmail,
-		"BelowZero": FailValMax,
+		"FirstName":     FailLenMax,
+		"LastName":      FailLenMin,
+		"Age":           FailValMin,
+		"PostCode":      FailRegexp,
+		"Email":         FailEmail,
+		"BelowZero":     FailValMax,
 		"DiscountPrice": FailValMax,
-		"Country": FailRegexp,
+		"Country":       FailRegexp,
 	}
 	compare(&s, expectedBool, expectedFailedFields, nil, nil, "", t)
 }
 
 func TestWithValidValues(t *testing.T) {
 	s := Test1{
-		FirstName: "Johnny",
-		LastName: "Smith",
-		Age: 35,
-		Price: 0,
-		PostCode: "43-155",
-		Email: "john@example.com",
-		BelowZero: -4,
+		FirstName:     "Johnny",
+		LastName:      "Smith",
+		Age:           35,
+		Price:         0,
+		PostCode:      "43-155",
+		Email:         "john@example.com",
+		BelowZero:     -4,
 		DiscountPrice: 8000,
-		Country: "GB",
-		County: "Enfield",
+		Country:       "GB",
+		County:        "Enfield",
 	}
 	expectedBool := true
 	expectedFailedFields := map[string]int{}
@@ -92,41 +92,40 @@ func TestWithValidValues(t *testing.T) {
 
 func TestWithInvalidValuesAndFieldRestriction(t *testing.T) {
 	s := Test1{
-		FirstName: "123456789012345678901234567890",
-		LastName: "b",
-		Age: 15,
-		Price: 0,
-		PostCode: "AA123",
-		Email: "invalidEmail",
-		BelowZero: 8,
+		FirstName:     "123456789012345678901234567890",
+		LastName:      "b",
+		Age:           15,
+		Price:         0,
+		PostCode:      "AA123",
+		Email:         "invalidEmail",
+		BelowZero:     8,
 		DiscountPrice: 9999,
-		Country: "Tokelau",
-		County: "",
+		Country:       "Tokelau",
+		County:        "",
 	}
 	expectedBool := false
 	expectedFailedFields := map[string]int{
 		"FirstName": FailLenMax,
-		"LastName": FailLenMin,
+		"LastName":  FailLenMin,
 	}
 	compare(&s, expectedBool, expectedFailedFields, map[string]bool{
 		"FirstName": true,
-		"LastName": true,
+		"LastName":  true,
 	}, nil, "", t)
 }
 
-
 func TestWithInvalidValuesAndFieldRestrictionAndOverwrittenFieldTags(t *testing.T) {
 	s := Test1{
-		FirstName: "123456789012345678901234567890",
-		LastName: "b",
-		Age: 15,
-		Price: 0,
-		PostCode: "AA123",
-		Email: "invalidEmail",
-		BelowZero: 8,
+		FirstName:     "123456789012345678901234567890",
+		LastName:      "b",
+		Age:           15,
+		Price:         0,
+		PostCode:      "AA123",
+		Email:         "invalidEmail",
+		BelowZero:     8,
 		DiscountPrice: 9999,
-		Country: "Tokelau",
-		County: "",
+		Country:       "Tokelau",
+		County:        "",
 	}
 	expectedBool := false
 	expectedFailedFields := map[string]int{
@@ -134,7 +133,7 @@ func TestWithInvalidValuesAndFieldRestrictionAndOverwrittenFieldTags(t *testing.
 	}
 	compare(&s, expectedBool, expectedFailedFields, map[string]bool{
 		"FirstName": true,
-		"LastName": true,
+		"LastName":  true,
 	}, map[string]map[string]string{
 		"FirstName": map[string]string{
 			"validation": "req lenmin:4 lenmax:100",
@@ -144,27 +143,27 @@ func TestWithInvalidValuesAndFieldRestrictionAndOverwrittenFieldTags(t *testing.
 
 func TestWithInvalidValuesAndOverwrittenTagName(t *testing.T) {
 	s := Test2{
-		FirstName: "123456789012345678901234567890",
-		LastName: "b",
-		Age: 15,
-		Price: 0,
-		PostCode: "AA123",
-		Email: "invalidEmail",
-		BelowZero: 8,
+		FirstName:     "123456789012345678901234567890",
+		LastName:      "b",
+		Age:           15,
+		Price:         0,
+		PostCode:      "AA123",
+		Email:         "invalidEmail",
+		BelowZero:     8,
 		DiscountPrice: 9999,
-		Country: "Tokelau",
-		County: "",
+		Country:       "Tokelau",
+		County:        "",
 	}
 	expectedBool := false
 	expectedFailedFields := map[string]int{
-		"FirstName": FailLenMax,
-		"LastName": FailLenMin,
-		"Age": FailValMin,
-		"PostCode": FailRegexp,
-		"Email": FailEmail,
-		"BelowZero": FailValMax,
+		"FirstName":     FailLenMax,
+		"LastName":      FailLenMin,
+		"Age":           FailValMin,
+		"PostCode":      FailRegexp,
+		"Email":         FailEmail,
+		"BelowZero":     FailValMax,
 		"DiscountPrice": FailValMax,
-		"Country": FailRegexp,
+		"Country":       FailRegexp,
 	}
 	compare(&s, expectedBool, expectedFailedFields, nil, nil, "mytag", t)
 }
