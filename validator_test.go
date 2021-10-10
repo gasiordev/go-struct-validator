@@ -1,8 +1,8 @@
 package validator
 
 import (
-	"testing"
 	"log"
+	"testing"
 )
 
 type Test1 struct {
@@ -32,12 +32,16 @@ type Test2 struct {
 }
 
 type Test3 struct {
-	ZeroMin int `mytag:"valmin:0 valmax:5"`
-	ZeroMax int `mytag:"valmax:0"`
+	ZeroMin  int `mytag:"valmin:0 valmax:5"`
+	ZeroMax  int `mytag:"valmax:0"`
 	ZeroBoth int `mytag:"valmin:0 valmax:0"`
-	NotZero int `mytag:"valmin:4 valmax:6"`
-	OnlyMin int `mytag:"valmin:3"`
-	OnlyMax int `mytag:"valmax:7"`
+	NotZero  int `mytag:"valmin:4 valmax:6"`
+	OnlyMin  int `mytag:"valmin:3"`
+	OnlyMax  int `mytag:"valmax:7"`
+}
+
+type Test4 struct {
+	PrimaryEmail string ``
 }
 
 func TestWithDefaultValues(t *testing.T) {
@@ -52,7 +56,8 @@ func TestWithDefaultValues(t *testing.T) {
 		"Country":   FailRegexp,
 		"BelowZero": FailValMax,
 	}
-	compare(&s, expectedBool, expectedFailedFields, nil, nil, "", t)
+	opts := &ValidationOptions{}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
 }
 
 func TestWithInvalidValues(t *testing.T) {
@@ -79,7 +84,8 @@ func TestWithInvalidValues(t *testing.T) {
 		"DiscountPrice": FailValMax,
 		"Country":       FailRegexp,
 	}
-	compare(&s, expectedBool, expectedFailedFields, nil, nil, "", t)
+	opts := &ValidationOptions{}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
 }
 
 func TestWithValidValues(t *testing.T) {
@@ -97,7 +103,8 @@ func TestWithValidValues(t *testing.T) {
 	}
 	expectedBool := true
 	expectedFailedFields := map[string]int{}
-	compare(&s, expectedBool, expectedFailedFields, nil, nil, "", t)
+	opts := &ValidationOptions{}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
 }
 
 func TestWithInvalidValuesAndFieldRestriction(t *testing.T) {
@@ -118,10 +125,13 @@ func TestWithInvalidValuesAndFieldRestriction(t *testing.T) {
 		"FirstName": FailLenMax,
 		"LastName":  FailLenMin,
 	}
-	compare(&s, expectedBool, expectedFailedFields, map[string]bool{
-		"FirstName": true,
-		"LastName":  true,
-	}, nil, "", t)
+	opts := &ValidationOptions{
+		RestrictFields: map[string]bool{
+			"FirstName": true,
+			"LastName":  true,
+		},
+	}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
 }
 
 func TestWithInvalidValuesAndFieldRestrictionAndOverwrittenFieldTags(t *testing.T) {
@@ -141,14 +151,18 @@ func TestWithInvalidValuesAndFieldRestrictionAndOverwrittenFieldTags(t *testing.
 	expectedFailedFields := map[string]int{
 		"LastName": FailLenMin,
 	}
-	compare(&s, expectedBool, expectedFailedFields, map[string]bool{
-		"FirstName": true,
-		"LastName":  true,
-	}, map[string]map[string]string{
-		"FirstName": map[string]string{
-			"validation": "req lenmin:4 lenmax:100",
+	opts := &ValidationOptions{
+		RestrictFields: map[string]bool{
+			"FirstName": true,
+			"LastName":  true,
 		},
-	}, "", t)
+		OverwriteFieldTags: map[string]map[string]string{
+			"FirstName": map[string]string{
+				"validation": "req lenmin:4 lenmax:100",
+			},
+		},
+	}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
 }
 
 func TestWithInvalidValuesAndOverwrittenTagName(t *testing.T) {
@@ -175,17 +189,23 @@ func TestWithInvalidValuesAndOverwrittenTagName(t *testing.T) {
 		"DiscountPrice": FailValMax,
 		"Country":       FailRegexp,
 	}
-	compare(&s, expectedBool, expectedFailedFields, nil, nil, "mytag", t)
+	opts := &ValidationOptions{
+		OverwriteTagName: "mytag",
+	}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
 }
 
 func TestValMinMaxWithDefault(t *testing.T) {
 	s := Test3{}
 	expectedBool := false
-	expectedFailedFields := map[string]int {
+	expectedFailedFields := map[string]int{
 		"NotZero": FailValMin,
 		"OnlyMin": FailValMin,
 	}
-	compare(&s, expectedBool, expectedFailedFields, nil, nil, "mytag", t)
+	opts := &ValidationOptions{
+		OverwriteTagName: "mytag",
+	}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
 }
 
 func TestValMinMaxWithValid(t *testing.T) {
@@ -195,32 +215,63 @@ func TestValMinMaxWithValid(t *testing.T) {
 		OnlyMax: 7,
 	}
 	expectedBool := true
-	expectedFailedFields := map[string]int {
+	expectedFailedFields := map[string]int{}
+	opts := &ValidationOptions{
+		OverwriteTagName: "mytag",
 	}
-	compare(&s, expectedBool, expectedFailedFields, nil, nil, "mytag", t)
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
 }
 
 func TestValMinMaxWithInvalid(t *testing.T) {
 	s := Test3{
-		ZeroMin: -4,
-		ZeroMax: -6,
+		ZeroMin:  -4,
+		ZeroMax:  -6,
 		ZeroBoth: -6,
-		NotZero: 2,
-		OnlyMin: -5,
-		OnlyMax: -6,
+		NotZero:  2,
+		OnlyMin:  -5,
+		OnlyMax:  -6,
 	}
 	expectedBool := false
-	expectedFailedFields := map[string]int {
-		"ZeroMin": FailValMin,
+	expectedFailedFields := map[string]int{
+		"ZeroMin":  FailValMin,
 		"ZeroBoth": FailValMin,
-		"NotZero": FailValMin,
-		"OnlyMin": FailValMin,
+		"NotZero":  FailValMin,
+		"OnlyMin":  FailValMin,
 	}
-	compare(&s, expectedBool, expectedFailedFields, nil, nil, "mytag", t)
+	opts := &ValidationOptions{
+		OverwriteTagName: "mytag",
+	}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
 }
 
-func compare(s interface{}, expectedBool bool, expectedFailedFields map[string]int, restrictFields map[string]bool, overwriteFieldTags map[string]map[string]string, overwriteTagName string, t *testing.T) {
-	valid, failedFields := Validate(s, restrictFields, overwriteFieldTags, overwriteTagName)
+func TestWithInvalidValuesWithSuffixValidation(t *testing.T) {
+	s := Test4{
+		PrimaryEmail: "invalidemail",
+	}
+	expectedBool := false
+	expectedFailedFields := map[string]int{
+		"PrimaryEmail": FailEmail,
+	}
+	opts := &ValidationOptions{
+		ValidateWhenSuffix: true,
+	}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
+}
+
+func TestWithInvalidValuesWithoutSuffixValidation(t *testing.T) {
+	s := Test4{
+		PrimaryEmail: "invalidemail",
+	}
+	expectedBool := true
+	expectedFailedFields := map[string]int{}
+	opts := &ValidationOptions{
+		ValidateWhenSuffix: false,
+	}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
+}
+
+func compare(s interface{}, expectedBool bool, expectedFailedFields map[string]int, options *ValidationOptions, t *testing.T) {
+	valid, failedFields := Validate(s, options)
 	if valid != expectedBool {
 		t.Fatalf("Validate returned invalid boolean value")
 	}

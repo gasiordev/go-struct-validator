@@ -32,14 +32,21 @@ const FailRegexp = 64
 const FailEmail = 128
 const FailZero = 256
 
-func Validate(obj interface{}, restrictFields map[string]bool, overwriteFieldTags map[string]map[string]string, overwriteTagName string) (bool, map[string]int) {
+type ValidationOptions struct {
+	RestrictFields     map[string]bool
+	OverwriteFieldTags map[string]map[string]string
+	OverwriteTagName   string
+	ValidateWhenSuffix bool
+}
+
+func Validate(obj interface{}, options *ValidationOptions) (bool, map[string]int) {
 	v := reflect.ValueOf(obj)
 	i := reflect.Indirect(v)
 	s := i.Type()
 
 	tagName := "validation"
-	if overwriteTagName != "" {
-		tagName = overwriteTagName
+	if options != nil && options.OverwriteTagName != "" {
+		tagName = options.OverwriteTagName
 	}
 
 	invalidFields := map[string]int{}
@@ -50,7 +57,7 @@ func Validate(obj interface{}, restrictFields map[string]bool, overwriteFieldTag
 		fieldKind := field.Type.Kind()
 
 		// check if only specified field should be checked
-		if len(restrictFields) > 0 && !restrictFields[field.Name] {
+		if options != nil && len(options.RestrictFields) > 0 && !options.RestrictFields[field.Name] {
 			continue
 		}
 		// validate only ints and string
@@ -65,13 +72,13 @@ func Validate(obj interface{}, restrictFields map[string]bool, overwriteFieldTag
 		// get tag values
 		tagVal := field.Tag.Get(tagName)
 		tagRegexpVal := field.Tag.Get(tagName + "_regexp")
-		if len(overwriteFieldTags) > 0 {
-			if len(overwriteFieldTags[field.Name]) > 0 {
-				if overwriteFieldTags[field.Name][tagName] != "" {
-					tagVal = overwriteFieldTags[field.Name][tagName]
+		if options != nil && len(options.OverwriteFieldTags) > 0 {
+			if len(options.OverwriteFieldTags[field.Name]) > 0 {
+				if options.OverwriteFieldTags[field.Name][tagName] != "" {
+					tagVal = options.OverwriteFieldTags[field.Name][tagName]
 				}
-				if overwriteFieldTags[field.Name][tagName+"_regexp"] != "" {
-					tagRegexpVal = overwriteFieldTags[field.Name][tagName+"_regexp"]
+				if options.OverwriteFieldTags[field.Name][tagName+"_regexp"] != "" {
+					tagRegexpVal = options.OverwriteFieldTags[field.Name][tagName+"_regexp"]
 				}
 			}
 		}
@@ -79,6 +86,16 @@ func Validate(obj interface{}, restrictFields map[string]bool, overwriteFieldTag
 		setValidationFromTag(&validation, tagVal)
 		if tagRegexpVal != "" {
 			validation.regexp = regexp.MustCompile(tagRegexpVal)
+		}
+
+		if options != nil && options.ValidateWhenSuffix {
+			if strings.HasSuffix(field.Name, "Email") {
+				validation.flags = validation.flags | Email
+			}
+			if strings.HasSuffix(field.Name, "Price") && validation.valMin == 0 && validation.valMax == 0 && validation.flags&ValMinNotNil == 0 && validation.flags&ValMaxNotNil == 0 {
+				validation.valMin = 0
+				validation.flags = validation.flags | ValMinNotNil
+			}
 		}
 
 		fieldValid, failureFlags := validateValue(v.Elem().FieldByName(field.Name), &validation)
