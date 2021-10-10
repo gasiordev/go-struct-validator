@@ -92,16 +92,20 @@ func Validate(obj interface{}, restrictFields map[string]bool, overwriteFieldTag
 }
 
 func validateValue(value reflect.Value, validation *FieldValidation) (bool, int) {
-	canBeZero := false
-	if validation.flags&ValMinNotNil > 0 || validation.flags&ValMaxNotNil > 0 {
-		canBeZero = true
+	minCanBeZero := false
+	maxCanBeZero := false
+	if validation.flags&ValMinNotNil > 0 {
+		minCanBeZero = true
+	}
+	if validation.flags&ValMaxNotNil > 0 {
+		maxCanBeZero = true
 	}
 
 	if validation.flags&Required > 0 {
 		if value.Type().Name() == "string" && value.String() == "" {
 			return false, FailEmpty
 		}
-		if strings.HasPrefix(value.Type().Name(), "int") && value.Int() == 0 && !canBeZero {
+		if strings.HasPrefix(value.Type().Name(), "int") && value.Int() == 0 && !minCanBeZero && !maxCanBeZero && validation.valMin == 0 && validation.valMax == 0 {
 			return false, FailZero
 		}
 	}
@@ -129,10 +133,10 @@ func validateValue(value reflect.Value, validation *FieldValidation) (bool, int)
 	}
 
 	if strings.HasPrefix(value.Type().Name(), "int") {
-		if (validation.valMin != 0 || canBeZero) && validation.valMin > value.Int() {
+		if (validation.valMin != 0 || minCanBeZero) && validation.valMin > value.Int() {
 			return false, FailValMin
 		}
-		if (validation.valMax != 0 || canBeZero) && validation.valMax < value.Int() {
+		if (validation.valMax != 0 || maxCanBeZero) && validation.valMax < value.Int() {
 			return false, FailValMax
 		}
 	}

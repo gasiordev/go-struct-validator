@@ -2,6 +2,7 @@ package validator
 
 import (
 	"testing"
+	"log"
 )
 
 type Test1 struct {
@@ -30,13 +31,22 @@ type Test2 struct {
 	County        string `mytag:"lenmax:40"`
 }
 
+type Test3 struct {
+	ZeroMin int `mytag:"valmin:0 valmax:5"`
+	ZeroMax int `mytag:"valmax:0"`
+	ZeroBoth int `mytag:"valmin:0 valmax:0"`
+	NotZero int `mytag:"valmin:4 valmax:6"`
+	OnlyMin int `mytag:"valmin:3"`
+	OnlyMax int `mytag:"valmax:7"`
+}
+
 func TestWithDefaultValues(t *testing.T) {
 	s := Test1{}
 	expectedBool := false
 	expectedFailedFields := map[string]int{
 		"FirstName": FailEmpty,
 		"LastName":  FailEmpty,
-		"Age":       FailZero,
+		"Age":       FailValMin,
 		"PostCode":  FailEmpty,
 		"Email":     FailEmpty,
 		"Country":   FailRegexp,
@@ -168,6 +178,47 @@ func TestWithInvalidValuesAndOverwrittenTagName(t *testing.T) {
 	compare(&s, expectedBool, expectedFailedFields, nil, nil, "mytag", t)
 }
 
+func TestValMinMaxWithDefault(t *testing.T) {
+	s := Test3{}
+	expectedBool := false
+	expectedFailedFields := map[string]int {
+		"NotZero": FailValMin,
+		"OnlyMin": FailValMin,
+	}
+	compare(&s, expectedBool, expectedFailedFields, nil, nil, "mytag", t)
+}
+
+func TestValMinMaxWithValid(t *testing.T) {
+	s := Test3{
+		NotZero: 4,
+		OnlyMin: 3,
+		OnlyMax: 7,
+	}
+	expectedBool := true
+	expectedFailedFields := map[string]int {
+	}
+	compare(&s, expectedBool, expectedFailedFields, nil, nil, "mytag", t)
+}
+
+func TestValMinMaxWithInvalid(t *testing.T) {
+	s := Test3{
+		ZeroMin: -4,
+		ZeroMax: -6,
+		ZeroBoth: -6,
+		NotZero: 2,
+		OnlyMin: -5,
+		OnlyMax: -6,
+	}
+	expectedBool := false
+	expectedFailedFields := map[string]int {
+		"ZeroMin": FailValMin,
+		"ZeroBoth": FailValMin,
+		"NotZero": FailValMin,
+		"OnlyMin": FailValMin,
+	}
+	compare(&s, expectedBool, expectedFailedFields, nil, nil, "mytag", t)
+}
+
 func compare(s interface{}, expectedBool bool, expectedFailedFields map[string]int, restrictFields map[string]bool, overwriteFieldTags map[string]map[string]string, overwriteTagName string, t *testing.T) {
 	valid, failedFields := Validate(s, restrictFields, overwriteFieldTags, overwriteTagName)
 	if valid != expectedBool {
@@ -178,6 +229,9 @@ func compare(s interface{}, expectedBool bool, expectedFailedFields map[string]i
 
 func compareFailedFields(failedFields map[string]int, expectedFailedFields map[string]int, t *testing.T) {
 	if len(failedFields) != len(expectedFailedFields) {
+		for k, v := range failedFields {
+			log.Printf("%s %d", k, v)
+		}
 		t.Fatalf("Validate returned invalid number of failed fields %d where it should be %d", len(failedFields), len(expectedFailedFields))
 	}
 	for k, v := range expectedFailedFields {
