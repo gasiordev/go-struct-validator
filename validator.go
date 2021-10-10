@@ -33,10 +33,11 @@ const FailEmail = 128
 const FailZero = 256
 
 type ValidationOptions struct {
-	RestrictFields     map[string]bool
-	OverwriteFieldTags map[string]map[string]string
-	OverwriteTagName   string
-	ValidateWhenSuffix bool
+	RestrictFields       map[string]bool
+	OverwriteFieldTags   map[string]map[string]string
+	OverwriteTagName     string
+	ValidateWhenSuffix   bool
+	OverwriteFieldValues map[string]interface{}
 }
 
 func Validate(obj interface{}, options *ValidationOptions) (bool, map[string]int) {
@@ -60,6 +61,7 @@ func Validate(obj interface{}, options *ValidationOptions) (bool, map[string]int
 		if options != nil && len(options.RestrictFields) > 0 && !options.RestrictFields[field.Name] {
 			continue
 		}
+
 		// validate only ints and string
 		if !isNotInt(fieldKind) && !isNotString(fieldKind) {
 			continue
@@ -98,7 +100,14 @@ func Validate(obj interface{}, options *ValidationOptions) (bool, map[string]int
 			}
 		}
 
-		fieldValid, failureFlags := validateValue(v.Elem().FieldByName(field.Name), &validation)
+		var fieldValue reflect.Value
+		if options != nil && len(options.OverwriteFieldValues) > 0 && isKeyInMap(field.Name, options.OverwriteFieldValues) {
+			fieldValue = reflect.ValueOf(options.OverwriteFieldValues[field.Name])
+		} else {
+			fieldValue = v.Elem().FieldByName(field.Name)
+		}
+
+		fieldValid, failureFlags := validateValue(fieldValue, &validation)
 		if !fieldValid {
 			valid = false
 			invalidFields[field.Name] = failureFlags
@@ -213,6 +222,15 @@ func isNotInt(k reflect.Kind) bool {
 func isNotString(k reflect.Kind) bool {
 	if k == reflect.String {
 		return true
+	}
+	return false
+}
+
+func isKeyInMap(k string, m map[string]interface{}) bool {
+	for _, key := range reflect.ValueOf(m).MapKeys() {
+		if key.String() == k {
+			return true
+		}
 	}
 	return false
 }

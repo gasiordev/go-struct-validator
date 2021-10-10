@@ -270,6 +270,38 @@ func TestWithInvalidValuesWithoutSuffixValidation(t *testing.T) {
 	compare(&s, expectedBool, expectedFailedFields, opts, t)
 }
 
+func TestWithOverwrittenValues(t *testing.T) {
+	s := Test1{
+		FirstName:     "123456789012345678901234567890",
+		LastName:      "b",
+		Age:           15,
+		Price:         0,
+		PostCode:      "AA123",
+		Email:         "invalidEmail",
+		BelowZero:     8,
+		DiscountPrice: 9999,
+		Country:       "Tokelau",
+		County:        "",
+	}
+	expectedBool := false
+	expectedFailedFields := map[string]int{
+		"Age": FailValMax,
+	}
+	opts := &ValidationOptions{
+		RestrictFields: map[string]bool{
+			"FirstName": true,
+			"LastName":  true,
+			"Age":       true,
+		},
+		OverwriteFieldValues: map[string]interface{}{
+			"FirstName": "123456",
+			"LastName":  "123",
+			"Age":       300,
+		},
+	}
+	compare(&s, expectedBool, expectedFailedFields, opts, t)
+}
+
 func compare(s interface{}, expectedBool bool, expectedFailedFields map[string]int, options *ValidationOptions, t *testing.T) {
 	valid, failedFields := Validate(s, options)
 	if valid != expectedBool {
