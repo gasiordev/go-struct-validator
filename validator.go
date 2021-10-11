@@ -32,6 +32,12 @@ const FailRegexp = 64
 const FailEmail = 128
 const FailZero = 256
 
+// Optional configuration for validation:
+// * RestrictFields defines what struct fields should be validated
+// * OverwriteFieldTags can be used to overwrite tags for specific fields
+// * OverwriteTagName sets tag used to define validation (default is "validation")
+// * ValidateWhenSuffix will validate certain fields based on their name, eg. "PrimaryEmail" field will need to be a valid email
+// * OverwriteFieldValues is to use overwrite values for fields, so these values are validated not the ones in struct
 type ValidationOptions struct {
 	RestrictFields       map[string]bool
 	OverwriteFieldTags   map[string]map[string]string
@@ -40,6 +46,9 @@ type ValidationOptions struct {
 	OverwriteFieldValues map[string]interface{}
 }
 
+// Validate validates fields of a struct. Currently only fields which are string or int (any) are validated.
+// Func returns boolean value that determines whether value is true or false, and a map of fields that failed
+// validation. See Fail* constants for the values.
 func Validate(obj interface{}, options *ValidationOptions) (bool, map[string]int) {
 	v := reflect.ValueOf(obj)
 	i := reflect.Indirect(v)
